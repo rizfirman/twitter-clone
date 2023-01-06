@@ -1,68 +1,24 @@
 <template>
   <div id="app" class="flex container h-screen w-full">
-    <!-- side navbar -->
-    <div class="w-1/5 border-r border-lighter px-8 py-2 flex flex-col justify-between">
-      <div>
-        <button class="h-12 w-12 hover:bg-lightblue text-3xl text-blue rounded-full">
-          <i class="fa-brands fa-twitter"></i>
-        </button>
-        <div>
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="getId(tab.id)"
-            :class="`focus:outline-none hover:text-blue flex items-center py-2 px-4 hover:bg-lightblue rounded-full mr-auto mb-3 ${
-              id === tab.id ? 'text-blue' : ''
-            }`"
-          >
-            <i :class="`${tab.icon} text-2xl mr-4 text-left`"></i>
-            <p class="text-lg font-semibold text-left">{{ tab.title }}</p>
-          </button>
-        </div>
-        <button class="text-white bg-blue rounded-full font-semibold focus:outline-none w-full p-3 hover:bg-darkblue">
-          Tweet
-        </button>
-      </div>
+    <right-side-bar @get-id="getId" @open-drop-down="openDropDown" :dropdown="dropdown" :id="id" :tabs="tabs" />
 
-      <div class="w-full relative">
-        <button
-          @click="showDropDown"
-          class="flex items-center w-full hover:bg-lightblue rounded-full p-2 focus:outline-none"
-        >
-          <img src="profile.jpeg" alt="profile" class="w-10 h-10 rounded-full border border-lighter" />
-          <div class="ml-4">
-            <p class="text-sm font-bold leading-tight">Rizfirman</p>
-            <p class="text-sm leading-tight">@Rizfirman07</p>
-          </div>
-          <i class="fa-solid fa-ellipsis ml-auto text-lg"></i>
-        </button>
+    <Tweet-list @add-new-tweet="addNewTweet" :tweets="tweets" :following="following" v-model:value="tweet.content" />
 
-        <div v-if="show" class="absolute bottom-0 left-0 w-64 rounded-lg shadow-md border-lightest bg-white mb-16">
-          <button class="flex items-center w-full hover:bg-lightest p-3 focus:outline-none">
-            <img src="profile.jpeg" alt="profile" class="w-10 h-10 rounded-full border border-lighter" />
-            <div class="ml-4">
-              <p class="text-sm font-bold leading-tight">Rizfirman</p>
-              <p class="text-sm leading-tight">@Rizfirman07</p>
-            </div>
-            <i class="fa-solid fa-check ml-auto text-lg text-blue"></i>
-          </button>
-
-          <button class="w-full text-left hover:bg-lightest border-t border-lighter p-3 text-sm focus:outline-none">
-            Add an existing account
-          </button>
-
-          <button class="w-full text-left hover:bg-lightest border-t border-lighter p-3 text-sm focus:outline-none">
-            Log out @Rizfirman07
-          </button>
-        </div>
-      </div>
-    </div>
+    <Trending-bar :trending="trending" :friends="friends" />
   </div>
 </template>
 
 <script>
+import RightSideBar from '@/components/RightSideBar';
+import TweetList from '@/components/TweetList';
+import TrendingBar from '@/components/TrendingBar';
 export default {
-  name: 'App',
+  name: 'app',
+  components: {
+    RightSideBar,
+    TweetList,
+    TrendingBar,
+  },
   data() {
     return {
       tabs: [
@@ -76,18 +32,92 @@ export default {
         { icon: 'fas fa-ellipsis-h', title: 'More', id: 'more' },
       ],
       id: 'home',
-      show: false,
+      dropdown: false,
+      trending: [
+        {
+          top: 'Trending in TX',
+          title: 'Gigi',
+          bottom: 'Trending with: Rip Gigi',
+        },
+        { top: 'Music', title: 'We Won', bottom: '135K Tweets' },
+        { top: 'Pop', title: 'Blue Ivy', bottom: '40k tweets' },
+        { top: 'Trending in US', title: 'Denim Day', bottom: '40k tweets' },
+        { top: 'Trending', title: 'When Beyonce', bottom: '25.4k tweets' },
+      ],
+      friends: [
+        { src: 'elon.jpeg', name: 'Elon Musk', handle: '@teslaBoy' },
+        { src: 'monk.jpeg', name: 'Adrian Monk', handle: '@detective:)' },
+        { src: 'kevin.jpeg', name: 'Kevin Hart', handle: '@miniRock' },
+      ],
+      following: [
+        {
+          src: 'elon.jpeg',
+          name: 'Elon Musk',
+          handle: '@teslaBoy',
+          time: '20 min',
+          tweet: 'Should I just quarantine on mars??',
+          comments: '1,000',
+          retweets: '550',
+          like: '1,000,003',
+        },
+        {
+          src: 'kevin.jpeg',
+          name: 'Kevin Hart',
+          handle: '@miniRock',
+          time: '55 min',
+          tweet: 'Should me and the rock do another sub-par movie together????',
+          comments: '2,030',
+          retweets: '50',
+          like: '20,003',
+        },
+        {
+          src: 'elon.jpeg',
+          name: 'Elon Musk',
+          handle: '@teslaBoy',
+          time: '1.4 hr',
+          tweet: 'Haha just made a flame thrower. Shld I sell them?',
+          comments: '100,000',
+          retweets: '1,000,002',
+          like: '5,000,003',
+        },
+        {
+          src: 'elon.jpeg',
+          name: 'Elon Musk',
+          handle: '@teslaBoy',
+          time: '1.4 hr',
+          tweet: 'Just did something crazyyyyyyy',
+          comments: '100,500',
+          retweets: '1,000,032',
+          like: '5,000,103',
+        },
+      ],
+      tweets: [{ content: 'It is so nice outside!' }],
+      tweet: { content: '' },
     };
   },
+  watch: {
+    tweet: {
+      handler(val) {
+        console.log(val);
+      },
+      deep: true,
+    },
+  },
   methods: {
+    addNewTweet() {
+      let newTweet = {
+        content: this.tweet.content,
+      };
+      this.tweets.push(newTweet);
+      this.tweet.content = '';
+    },
+
     getId(id) {
       this.id = id;
     },
-    showDropDown() {
-      this.show = !this.show;
+    openDropDown() {
+      this.dropdown = !this.dropdown;
     },
   },
 };
 </script>
-
-<style></style>
